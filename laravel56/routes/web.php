@@ -53,3 +53,4 @@ Route::any('xuan','index\GoodsController@xuan');
 Route::any('user','index\IndexController@user');
 //微信
 Route::get('weixin/vaild1','Weixin\WeixinController@valid');
+Route::get('weixin/vaild1','Weixin\WeixinController@valid');
