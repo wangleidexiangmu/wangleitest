@@ -57,7 +57,9 @@ Route::any('user','index\IndexController@user');
 //微信
 Route::get('weixin/vaild1','Weixin\WeixinController@valid');
 //Route::psot('weixin/vaild1','Weixin\WeixinController@valid');
-Route::post('weixin/vaild1','Weixin\WeixinController@wxEvent');
+Route::any('weixin/vaild1','Weixin\WeixinController@wxEvent');
 //token
 Route::any('weixin/token','Weixin\WeixinController@getAccessToken');
+Route::any('weixin/test','Weixin\WeixinController@test');
+Route::any('weixin/info','Weixin\WeixinController@getUserInfo');
 
