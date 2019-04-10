@@ -106,11 +106,8 @@ return [
 
     'redis' => [
 
-<<<<<<< HEAD
-        'client' => 'predis',
-=======
+
         'client' => env('REDIS_CLIENT', 'phpredis'),
->>>>>>> 0e624d51403376940265f1010a096b6bf5729d22
 
         'default' => [
             'host' => env('REDIS_HOST', '127.0.0.1'),
