@@ -28,4 +28,3 @@ class WeixinController extends Controller
         return $arr['access_token'];
     }
 }
-

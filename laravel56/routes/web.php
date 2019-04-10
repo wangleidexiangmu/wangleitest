@@ -14,6 +14,9 @@
 Route::get('/', function () {
     return view('welcome');
 });
+Route::get('/info',function(){
+   phpinfo();
+});
 Route::get('index','index\IndexController@index');
 Route::get('login','login\LoginController@login');
 Route::get('register','login\RegisterController@register');
@@ -53,4 +56,8 @@ Route::any('xuan','index\GoodsController@xuan');
 Route::any('user','index\IndexController@user');
 //微信
 Route::get('weixin/vaild1','Weixin\WeixinController@valid');
-Route::get('weixin/vaild1','Weixin\WeixinController@valid');
+//Route::psot('weixin/vaild1','Weixin\WeixinController@valid');
+Route::any('weixin/vaild1','Weixin\WeixinController@wxEvent');
+//token
+Route::get('weixin/token','Weixin\WeixinController@getAccessToken');
+
