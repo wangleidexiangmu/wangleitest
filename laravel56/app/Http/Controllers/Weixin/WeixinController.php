@@ -20,7 +20,9 @@ class WeixinController extends Controller
     public function getAccessToken(){
         $rul="https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid='.env('WX_APPID')'&secret='.env('WX_SECRET')'";
         $response=file_get_contents($rul);
+
         $arr=json_decode($response,true);
+        var_dump($arr);exit;
         //缓存
         $key='wx_access_token';
         Redis::set($key,$arr['access_token']);
