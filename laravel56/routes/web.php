@@ -59,5 +59,5 @@ Route::get('weixin/vaild1','Weixin\WeixinController@valid');
 //Route::psot('weixin/vaild1','Weixin\WeixinController@valid');
 Route::any('weixin/vaild1','Weixin\WeixinController@wxEvent');
 //token
-Route::get('weixin/token','Weixin\WeixinController@getAccessToken');
+Route::any('weixin/token','Weixin\WeixinController@getAccessToken');
 
