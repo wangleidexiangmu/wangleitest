@@ -5,7 +5,7 @@ use   Illuminate\Support\Facades\Redis;
 use Illuminate\Http\Request;
 use  App\model\weixin\weixin;
 use App\Http\Controllers\Controller;
-
+use GuzzleHttp\Client;
 class WeixinController extends Controller
 {
     public function valid(){
@@ -81,54 +81,44 @@ class WeixinController extends Controller
         $u = json_decode($data,true);
         return $u;
     }
+    //微信菜单
     public function card(){
         $res='https://api.weixin.qq.com/cgi-bin/menu/create?access_token='.$this->getAccessToken().'';
-        $arrInfo ='{
-            "button":[
-     {
-         "type":"click",
-          "name":"今日歌曲",
-          "key":"V1001_TODAY_MUSIC"
-      },
-      {
-          "name":"菜单",
-           "sub_button":[
-           {
-               "type":"view",
-               "name":"搜索",
-               "url":"http://www.soso.com/"
-            },
-            {
-                "type":"miniprogram",
-                 "name":"wxa",
-                 "url":"http://mp.weixin.qq.com",
-                 "appid":"wx286b93c14bbf93aa",
-                 "pagepath":"pages/lunar/index"
-             },
-            {
-                "type":"click",
-               "name":"赞一下我们",
-               "key":"V1001_GOOD"
-            }]
-       }]
- }';
-        $data=json_decode($arrInfo,true);
-        $context = stream_context_create("
-            array('http' => array(　
-        'method' => 'POST',  
+        $arrInfo =[
+            "button"=>[
+                [
+                 "type"=>"click",
+                  "name"=>"客服",
+                  "key"=>"V1001_TODAY_MUSIC01"
+                ],
+                [
+                    "type"=>"click",
+                    "name"=>"其他",
+                    "key"=>"V1001_TODAY_MUSIC02"
+                ],
+           ] ,
+        ];
 
-      　　'header' => 'Content-type:application/x-www-form-urlencoded',
-  
-      　　'content' => http_build_query($data),  
 
-      　　'timeout' => 20  
+        $data=json_encode($arrInfo,JSON_UNESCAPED_UNICODE);//处理中文编码
+      //发送请求
+        $clinet= new Client();
+        //发送json字符串
+        $response=$clinet->request('POST',$res,[
+            'body'=>$data
+        ]);
+        //处理相应
+        $reslut=$response->getBody();
+        //转数组
+        $arr = json_decode($reslut,true);
+        //判断错误信息
+        if($arr['errcode']>0){
 
-    )  
+            echo "创建菜单失败";
+        }else{
 
-)");
-
-        $data=file_get_contents($res,false,$context);
-
+            echo "创建菜单成功";
+        }
 
     }
 }
