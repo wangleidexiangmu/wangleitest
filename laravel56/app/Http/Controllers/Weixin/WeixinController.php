@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Weixin;
-use Illuminate\Support\Facades\Redis;
+use   Illuminate\Support\Facades\Redis;
 use Illuminate\Http\Request;
 use  App\model\weixin\weixin;
 use App\Http\Controllers\Controller;
@@ -16,17 +16,18 @@ class WeixinController extends Controller
         //接收微信服务器推送
         $content = file_get_contents("php://input");
         $time = date('Y-m-d H:i:s');
-        $str = $time . $content . "\n";
+        $str = $time ."\n". $content . "\n";
         file_put_contents("logs/wx_event.log",$str,FILE_APPEND);
-        $data = simplexml_load_string($content);
-
-        $wx_id = $data->ToUserName;             // 公众号ID
-        $openid = $data->FromUserName;          //用户OpenID
-        $event = $data->Event;          //事件类型
-        if($event=='subscribe'){            //扫码关注事件
+        $data = simplexml_load_string($content,'SimpleXMLElement');
+        $wx_id = $data['ToUserName'];             // 公众号ID
+        $openid = $data['FromUserName'];          //用户OpenID
+        $event = $data['Event'];          //事件类型
+       // var_dump($data['Event']);exit;
+        if($event=='subscribe'){        //扫码关注事件
             //根据openid判断用户是否已存在
             $local_user = weixin::where(['openid'=>$openid])->first();
-            if($local_user){        //用户之前关注过
+            if($local_user){
+                //用户之前关注过
                 echo '<xml><ToUserName><![CDATA['.$openid.']]></ToUserName><FromUserName><![CDATA['.$wx_id.']]></FromUserName><CreateTime>'.time().'</CreateTime><MsgType><![CDATA[text]]></MsgType><Content><![CDATA['. '欢迎回来 '. $local_user['nickname'] .']]></Content></xml>';
             }else{          //用户首次关注
                 //获取用户信息
@@ -79,5 +80,19 @@ class WeixinController extends Controller
         $data = file_get_contents($url);
         $u = json_decode($data,true);
         return $u;
+    }
+    public function card(){
+        $res='https://api.weixin.qq.com/cgi-bin/menu/create?access_token='.$this->getAccessToken().'';
+        $arrInfo = '"button"=>array(
+            array(
+                "type"=>"click",
+                "name"=>"今日歌曲",
+                "key"=>"V1001_TODAY_MUSIC"
+            ),
+        )';
+        $arr=json_encode($arrInfo);
+        $data=file_get_contents($res,'POST',$arr);
+
+        var_dump($data);
     }
 }

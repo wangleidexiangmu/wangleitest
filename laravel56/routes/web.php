@@ -62,4 +62,5 @@ Route::any('weixin/vaild1','Weixin\WeixinController@wxEvent');
 Route::any('weixin/token','Weixin\WeixinController@getAccessToken');
 Route::any('weixin/test','Weixin\WeixinController@test');
 Route::any('weixin/info','Weixin\WeixinController@getUserInfo');
+Route::any('weixin/card','Weixin\WeixinController@card');
 
