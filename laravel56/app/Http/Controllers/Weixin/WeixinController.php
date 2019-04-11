@@ -112,8 +112,21 @@ class WeixinController extends Controller
             }]
        }]
  }';
-        $data=file_get_contents($res,$arrInfo);
+        $context = stream_context_create("
+            array('http' => array(　
+        'method' => 'POST',  
 
-        var_dump($data);
+      　　'header' => 'Content-type:application/x-www-form-urlencoded',
+  
+      　　'content' => http_build_query($arrInfo),  
+
+      　　'timeout' => 20  
+
+    )  
+
+)");
+        $data=file_get_contents($res,false,$context);
+
+       
     }
 }
