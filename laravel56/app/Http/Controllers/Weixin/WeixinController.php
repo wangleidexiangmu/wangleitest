@@ -125,8 +125,9 @@ class WeixinController extends Controller
     )  
 
 )");
-        $data=file_get_contents($res,false,$context);
+        $data=json_decode($res,true);
+        $data=file_get_contents($data,false,$context);
 
-       
+
     }
 }
