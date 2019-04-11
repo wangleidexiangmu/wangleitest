@@ -112,21 +112,22 @@ class WeixinController extends Controller
             }]
        }]
  }';
+        $data=json_decode($arrInfo,true);
         $context = stream_context_create("
             array('http' => array(　
         'method' => 'POST',  
 
       　　'header' => 'Content-type:application/x-www-form-urlencoded',
   
-      　　'content' => http_build_query($arrInfo),  
+      　　'content' => http_build_query($data),  
 
       　　'timeout' => 20  
 
     )  
 
 )");
-        $data=json_decode($res,true);
-        $data=file_get_contents($data,false,$context);
+
+        $data=file_get_contents($res,false,$context);
 
 
     }
