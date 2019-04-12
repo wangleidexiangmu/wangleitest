@@ -12,22 +12,34 @@ class WeixinController extends Controller
     public function valid(){
         echo $_GET['echostr'];
     }
+    public function atoken()
+    {
+        echo $this->getAccessToken();
+    }
     public function wxEvent()
     {
         //接收微信服务器推送
         $content = file_get_contents("php://input");
         $time = date('Y-m-d H:i:s');
-        $str = $time ."\n". $content . "\n";
+        $str = $time . $content . "\n";
         file_put_contents("logs/wx_event.log",$str,FILE_APPEND);
-        $data = simplexml_load_string($content,'SimpleXMLElement');
-        $wx_id = $data['ToUserName'];             // 公众号ID
-        $openid = $data['FromUserName'];          //用户OpenID
-        $event = $data['Event'];//事件类型
-        $type=$data['MsgType'];
-        $txt=$data['Conten'];//文本信息
-        $addtime=$data['CreateTime'];//时间
-        $MediaId=$data['MediaId'];//
-       // var_dump($data['Event']);exit;
+        $data = simplexml_load_string($content);
+//                echo 'ToUserName: '. $data->ToUserName;echo '</br>';        // 公众号ID
+//        echo 'FromUserName: '. $data->FromUserName;echo '</br>';    // 用户OpenID
+//        echo 'CreateTime: '. $data->CreateTime;echo '</br>';        // 时间戳
+//        echo 'MsgType: '. $data->MsgType;echo '</br>';              // 消息类型
+//        echo 'Event: '. $data->Event;echo '</br>';                  // 事件类型
+//        echo 'EventKey: '. $data->EventKey;echo '</br>';
+//
+//      exit;
+        $wx_id = $data->ToUserName;// 公众号ID
+        $openid = $data->FromUserName;//用户OpenID
+        $event = $data->Event;//事件类型
+        $type=$data->MsgType;
+        $txt=$data->Conten;//文本信息
+        $addtime=$data->CreateTime;//时间
+        $MediaId=$data->MediaId;//
+        //var_dump($data['Event']);exit;
         if($event=='subscribe'){        //扫码关注事件
             //根据openid判断用户是否已存在
             $local_user = weixin::where(['openid'=>$openid])->first();
@@ -57,7 +69,7 @@ class WeixinController extends Controller
                 'createtime'=>$addtime,
             ];
             $txtinfo=txt::insert($info);
-          
+
         } else if($type=='image'){
             $access = $this->getAccessToken();
             $url = "https://api.weixin.qq.com/cgi-bin/media/get?access_token=$access&media_id=$MediaId";
@@ -76,13 +88,13 @@ class WeixinController extends Controller
     public function getAccessToken(){
         //判断是否有缓存
         $key='wx_access_token';
-        $token=redis::get($key);
+        $token=Redis::get($key);
         if($token) {
 
         }else{
-            $rul='https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid='.env('WX_APPID').'&secret='.env('WX_SECRET').'';
+            $url = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid='.env('WX_APPID').'&secret='.env('WX_APPSECRET');
             //var_dump($rul);exit;
-            $response=file_get_contents($rul);
+            $response=file_get_contents($url);
             //var_dump($response);exit;
             $arr=json_decode($response,true);
             //  var_dump($arr);exit;
@@ -90,7 +102,7 @@ class WeixinController extends Controller
 
             Redis::set($key,$arr['access_token']);
             Redis::expire($key,3600);
-            return $arr['access_token'];
+            $token= $arr['access_token'];
 
         }
         return $token;
