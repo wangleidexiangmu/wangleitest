@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Weixin;
 use   Illuminate\Support\Facades\Redis;
 use Illuminate\Http\Request;
 use  App\model\weixin\weixin;
+use  App\model\weixin\txt;
 use App\Http\Controllers\Controller;
 use GuzzleHttp\Client;
 class WeixinController extends Controller
@@ -21,7 +22,11 @@ class WeixinController extends Controller
         $data = simplexml_load_string($content,'SimpleXMLElement');
         $wx_id = $data['ToUserName'];             // 公众号ID
         $openid = $data['FromUserName'];          //用户OpenID
-        $event = $data['Event'];          //事件类型
+        $event = $data['Event'];//事件类型
+        $type=$data['MsgType'];
+        $txt=$data['Conten'];//文本信息
+        $addtime=$data['CreateTime'];//时间
+        $MediaId=$data['MediaId'];//
        // var_dump($data['Event']);exit;
         if($event=='subscribe'){        //扫码关注事件
             //根据openid判断用户是否已存在
@@ -43,6 +48,30 @@ class WeixinController extends Controller
                 echo '<xml><ToUserName><![CDATA['.$openid.']]></ToUserName><FromUserName><![CDATA['.$wx_id.']]></FromUserName><CreateTime>'.time().'</CreateTime><MsgType><![CDATA[text]]></MsgType><Content><![CDATA['. '欢迎关注 '. $u['nickname'] .']]></Content></xml>';
             }
         }
+        if($type=='text'){
+            file_put_contents("/logs/txt.log", $str, FILE_APPEND);
+            $u=$this->getUserInfo($openid);
+            $info=[
+                'openid'=>$u['openid'],
+                'text'=>$txt,
+                'createtime'=>$addtime,
+            ];
+            $txtinfo=txt::insert($info);
+          
+        } else if($type=='image'){
+            $access = $this->getAccessToken();
+            $url = "https://api.weixin.qq.com/cgi-bin/media/get?access_token=$access&media_id=$MediaId";
+            $time = time();
+            $res_str = file_get_contents($url);
+            file_put_contents("/logs/image/$time.jpg", $res_str, FILE_APPEND);
+        }else if($type=='voice'){
+            $access =  $this->getAccessToken();
+            $vourl = "https://api.weixin.qq.com/cgi-bin/media/get?access_token=$access&media_id=$MediaId";
+            $votime = time();
+            $res_str = file_get_contents($vourl);
+            file_put_contents("/logs/voice/$votime.mp3", $res_str, FILE_APPEND);
+        }
+
     }
     public function getAccessToken(){
         //判断是否有缓存
@@ -116,9 +145,10 @@ class WeixinController extends Controller
 
             echo "创建菜单失败";
         }else{
-
             echo "创建菜单成功";
         }
 
     }
+
+
 }
