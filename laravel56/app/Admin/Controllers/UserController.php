@@ -83,9 +83,17 @@ class UserController extends Controller
 
         $grid->w_id('W id');
         $grid->openid('Openid');
-        $grid->nickname('Nickname');
-        $grid->sex('Sex');
-        $grid->headimgurl('Headimgurl');
+        $grid->nickname('昵称');
+        $grid->sex('性别')->display(function($sex){
+            if($sex==1){
+                return "男";
+            }else{
+                return "女";
+            }
+        });
+        $grid->headimgurl('头像')->display(function($img){
+            return '<img src="'.$img.'">';
+        });
 
         return $grid;
     }
