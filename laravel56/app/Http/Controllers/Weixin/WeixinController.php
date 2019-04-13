@@ -24,15 +24,24 @@ class WeixinController extends Controller
         $time = date('Y-m-d H:i:s');
         $str = $time . $content . "\n";
         file_put_contents("logs/wx_event.log",$str,FILE_APPEND);
+<<<<<<< HEAD
         // var_dump($content);exit;
         $data = simplexml_load_string($content);
         //$data = (array)simplexml_load_string($content, 'SimpleXMLElement', LIBXML_NOCDATA);
         // var_dump($data);exit;
         $type=$data->MsgType;
+=======
+       // var_dump($content);exit;
+        $data = simplexml_load_string($content);
+       //$data = (array)simplexml_load_string($content, 'SimpleXMLElement', LIBXML_NOCDATA);
+       // var_dump($data);exit;
+       $type=$data->MsgType;
+>>>>>>> ee11ec56f2f19af5c09e1f0c689207bb6ad1a3bb
         //var_dump($type);exit;
 
 
 
+<<<<<<< HEAD
         $wx_id = $data->ToUserName;// 公众号ID
         $openid = $data->FromUserName;//用户OpenID
         $event = $data->Event;//事件类型
@@ -42,6 +51,17 @@ class WeixinController extends Controller
             if($local_user){
                 //用户之前关注过
                 echo '
+=======
+    $wx_id = $data->ToUserName;// 公众号ID
+    $openid = $data->FromUserName;//用户OpenID
+    $event = $data->Event;//事件类型
+    if($event=='subscribe'){        //扫码关注事件
+        //根据openid判断用户是否已存在
+        $local_user = weixin::where(['openid'=>$openid])->first();
+        if($local_user){
+            //用户之前关注过
+            echo '
+>>>>>>> ee11ec56f2f19af5c09e1f0c689207bb6ad1a3bb
                     <xml>
                     <ToUserName><![CDATA['.$openid.']]></ToUserName>
                     <FromUserName><![CDATA['.$wx_id.']]></FromUserName>
@@ -70,6 +90,7 @@ class WeixinController extends Controller
                     </xml>';
             }
         }
+<<<<<<< HEAD
 
 
         if($type=='text'){
@@ -101,6 +122,40 @@ class WeixinController extends Controller
             $votime = time();
             $res_str = file_get_contents($vourl);
             file_put_contents("/tmp/voice/$votime.mp3", $res_str, FILE_APPEND);
+=======
+    }
+
+
+    if($type=='text'){
+    $txt=$data->Content;//文本信息
+   // var_dump($txt);exit;
+    $addtime=$data->CreateTime;//时间
+        file_put_contents("logs/txt.log", $str, FILE_APPEND);
+        $openid = $data->FromUserName;
+        //$u=$this->getUserInfo($openid);
+        $info=[
+            'openid'=>$openid,
+            'text'=>$txt,
+            'createtime'=>$addtime,
+        ];
+        $txtinfo=txt::insert($info);
+      //  var_dump($txtinfo);exit;
+
+}else if($type=='image'){
+            $MediaId=$data->MediaId;//
+        $access = $this->getAccessToken();
+        $url = "https://api.weixin.qq.com/cgi-bin/media/get?access_token=$access&media_id=$MediaId";
+        $time = time();
+        $res_str = file_get_contents($url);
+        file_put_contents("/tmp/image/$time.jpg", $res_str, FILE_APPEND);
+        }else if($type=='voice'){
+    $MediaId=$data['MsgId'];//
+        $access =  $this->getAccessToken();
+        $vourl = "https://api.weixin.qq.com/cgi-bin/media/get?access_token=$access&media_id=$MediaId";
+        $votime = time();
+        $res_str = file_get_contents($vourl);
+        file_put_contents("/tmp/voice/$votime.mp3", $res_str, FILE_APPEND);
+>>>>>>> ee11ec56f2f19af5c09e1f0c689207bb6ad1a3bb
         }
 
     }
