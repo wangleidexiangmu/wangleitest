@@ -23,27 +23,12 @@ class WeixinController extends Controller
         $time = date('Y-m-d H:i:s');
         $str = $time . $content . "\n";
         file_put_contents("logs/wx_event.log",$str,FILE_APPEND);
+       // var_dump($content);exit;
        // $data = simplexml_load_string($content);
-        $data = (array)simplexml_load_string($content, 'SimpleXMLElement', LIBXML_NOCDATA);
+       $data = (array)simplexml_load_string($content, 'SimpleXMLElement', LIBXML_NOCDATA);
        // var_dump($data);exit;
-//                echo 'ToUserName: '. $data->ToUserName;echo '</br>';        // 公众号ID
-//        echo 'FromUserName: '. $data->FromUserName;echo '</br>';    // 用户OpenID
-//        echo 'CreateTime: '. $data->CreateTime;echo '</br>';        // 时间戳
-//        echo 'MsgType: '. $data->MsgType;echo '</br>';              // 消息类型
-//        echo 'Event: '. $data->Event;echo '</br>';                  // 事件类型
-//        echo 'EventKey: '. $data->EventKey;echo '</br>';
-//
-//      exit;
-//        $wx_id = $data->ToUserName;// 公众号ID
-//        $openid = $data->FromUserName;//用户OpenID
-//        $event = $data->Event;//事件类型
-//        $type=$data->MsgType;
-//        $txt=$data->Conten;//文本信息
-//        $addtime=$data->CreateTime;//时间
-//        $MediaId=$data->MediaId;//
-
         $type=$data['MsgType'];
-        //echo $type;exit;
+        //var_dump($type);exit;
 
 if($type=='event'){
     $wx_id = $data['ToUserName'];// 公众号ID
@@ -85,10 +70,8 @@ if($type=='event'){
     }
 }else if($type=='text'){
     $txt=$data['Content'];//文本信息
+   // var_dump($txt);exit;
     $addtime=$data['CreateTime'];//时间
-    $MediaId=$data['MsgId'];//
-    if($type=='text'){
-
         file_put_contents("logs/txt.log", $str, FILE_APPEND);
         $openid = $data['FromUserName'];
         $u=$this->getUserInfo($openid);
@@ -98,8 +81,8 @@ if($type=='event'){
             'createtime'=>$addtime,
         ];
         $txtinfo=txt::insert($info);
+      //  var_dump($txtinfo);exit;
 
-    }
 }else if($type=='image'){
     $MediaId=$data['MsgId'];//
             $access = $this->getAccessToken();
