@@ -23,7 +23,9 @@ class WeixinController extends Controller
         $time = date('Y-m-d H:i:s');
         $str = $time . $content . "\n";
         file_put_contents("logs/wx_event.log",$str,FILE_APPEND);
-        $data = simplexml_load_string($content);
+       // $data = simplexml_load_string($content);
+        $data = (array)simplexml_load_string($content, 'SimpleXMLElement', LIBXML_NOCDATA);
+       // var_dump($data);exit;
 //                echo 'ToUserName: '. $data->ToUserName;echo '</br>';        // 公众号ID
 //        echo 'FromUserName: '. $data->FromUserName;echo '</br>';    // 用户OpenID
 //        echo 'CreateTime: '. $data->CreateTime;echo '</br>';        // 时间戳
@@ -32,51 +34,81 @@ class WeixinController extends Controller
 //        echo 'EventKey: '. $data->EventKey;echo '</br>';
 //
 //      exit;
-        $wx_id = $data->ToUserName;// 公众号ID
-        $openid = $data->FromUserName;//用户OpenID
-        $event = $data->Event;//事件类型
-        $type=$data->MsgType;
-        $txt=$data->Conten;//文本信息
-        $addtime=$data->CreateTime;//时间
-        $MediaId=$data->MediaId;//
-        //var_dump($data['Event']);exit;
-        if($event=='subscribe'){        //扫码关注事件
-            //根据openid判断用户是否已存在
-            $local_user = weixin::where(['openid'=>$openid])->first();
-            if($local_user){
-                //用户之前关注过
-                echo '<xml><ToUserName><![CDATA['.$openid.']]></ToUserName><FromUserName><![CDATA['.$wx_id.']]></FromUserName><CreateTime>'.time().'</CreateTime><MsgType><![CDATA[text]]></MsgType><Content><![CDATA['. '欢迎回来 '. $local_user['nickname'] .']]></Content></xml>';
-            }else{          //用户首次关注
-                //获取用户信息
-                $u = $this->getUserInfo($openid);
-                //用户信息入库
-                $u_info = [
-                    'openid'    => $u['openid'],
-                    'nickname'  => $u['nickname'],
-                    'sex'  => $u['sex'],
-                    'headimgurl'  => $u['headimgurl'],
-                ];
-                $id = weixin::insertGetId($u_info);
-                echo '<xml><ToUserName><![CDATA['.$openid.']]></ToUserName><FromUserName><![CDATA['.$wx_id.']]></FromUserName><CreateTime>'.time().'</CreateTime><MsgType><![CDATA[text]]></MsgType><Content><![CDATA['. '欢迎关注 '. $u['nickname'] .']]></Content></xml>';
-            }
-        }
-        if($type=='text'){
-            file_put_contents("/logs/txt.log", $str, FILE_APPEND);
-            $u=$this->getUserInfo($openid);
-            $info=[
-                'openid'=>$u['openid'],
-                'text'=>$txt,
-                'createtime'=>$addtime,
-            ];
-            $txtinfo=txt::insert($info);
+//        $wx_id = $data->ToUserName;// 公众号ID
+//        $openid = $data->FromUserName;//用户OpenID
+//        $event = $data->Event;//事件类型
+//        $type=$data->MsgType;
+//        $txt=$data->Conten;//文本信息
+//        $addtime=$data->CreateTime;//时间
+//        $MediaId=$data->MediaId;//
 
-        } else if($type=='image'){
+        $type=$data['MsgType'];
+        //echo $type;exit;
+
+if($type=='event'){
+    $wx_id = $data['ToUserName'];// 公众号ID
+    $openid = $data['FromUserName'];//用户OpenID
+    $event = $data['Event'];//事件类型
+    if($event=='subscribe'){        //扫码关注事件
+        //根据openid判断用户是否已存在
+        $local_user = weixin::where(['openid'=>$openid])->first();
+        if($local_user){
+            //用户之前关注过
+            echo '
+                    <xml>
+                    <ToUserName><![CDATA['.$openid.']]></ToUserName>
+                    <FromUserName><![CDATA['.$wx_id.']]></FromUserName>
+                    <CreateTime>'.time().'</CreateTime>
+                    <MsgType><![CDATA[text]]></MsgType>
+                    <Content><![CDATA['. '欢迎回来 '. $local_user['nickname'] .']]></Content>
+                    </xml>';
+        }else{          //用户首次关注
+            //获取用户信息
+            $u = $this->getUserInfo($openid);
+            //用户信息入库
+            $u_info = [
+                'openid'    => $u['openid'],
+                'nickname'  => $u['nickname'],
+                'sex'  => $u['sex'],
+                'headimgurl'  => $u['headimgurl'],
+            ];
+            $id = weixin::insertGetId($u_info);
+            echo '
+                    <xml>
+                    <ToUserName><![CDATA['.$openid.']]></ToUserName>
+                    <FromUserName><![CDATA['.$wx_id.']]></FromUserName>
+                    <CreateTime>'.time().'</CreateTime>
+                    <MsgType><![CDATA[text]]></MsgType>
+                    <Content><![CDATA['. '欢迎关注 '. $u['nickname'] .']]></Content>
+                    </xml>';
+        }
+    }
+}else if($type=='text'){
+    $txt=$data['Content'];//文本信息
+    $addtime=$data['CreateTime'];//时间
+    $MediaId=$data['MsgId'];//
+    if($type=='text'){
+
+        file_put_contents("logs/txt.log", $str, FILE_APPEND);
+        $openid = $data['FromUserName'];
+        $u=$this->getUserInfo($openid);
+        $info=[
+            'openid'=>$u['openid'],
+            'text'=>$txt,
+            'createtime'=>$addtime,
+        ];
+        $txtinfo=txt::insert($info);
+
+    }
+}else if($type=='image'){
+    $MediaId=$data['MsgId'];//
             $access = $this->getAccessToken();
             $url = "https://api.weixin.qq.com/cgi-bin/media/get?access_token=$access&media_id=$MediaId";
             $time = time();
             $res_str = file_get_contents($url);
             file_put_contents("/logs/image/$time.jpg", $res_str, FILE_APPEND);
         }else if($type=='voice'){
+    $MediaId=$data['MsgId'];//
             $access =  $this->getAccessToken();
             $vourl = "https://api.weixin.qq.com/cgi-bin/media/get?access_token=$access&media_id=$MediaId";
             $votime = time();
