@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use  App\model\weixin\weixin;
 use  App\model\weixin\txt;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Cache;
 use GuzzleHttp\Client;
 class WeixinController extends Controller
 {
@@ -24,16 +25,17 @@ class WeixinController extends Controller
         $str = $time . $content . "\n";
         file_put_contents("logs/wx_event.log",$str,FILE_APPEND);
        // var_dump($content);exit;
-       // $data = simplexml_load_string($content);
-       $data = (array)simplexml_load_string($content, 'SimpleXMLElement', LIBXML_NOCDATA);
+        $data = simplexml_load_string($content);
+       //$data = (array)simplexml_load_string($content, 'SimpleXMLElement', LIBXML_NOCDATA);
        // var_dump($data);exit;
-        $type=$data['MsgType'];
+       $type=$data->MsgType;
         //var_dump($type);exit;
 
-if($type=='event'){
-    $wx_id = $data['ToUserName'];// 公众号ID
-    $openid = $data['FromUserName'];//用户OpenID
-    $event = $data['Event'];//事件类型
+
+
+    $wx_id = $data->ToUserName;// 公众号ID
+    $openid = $data->FromUserName;//用户OpenID
+    $event = $data->Event;//事件类型
     if($event=='subscribe'){        //扫码关注事件
         //根据openid判断用户是否已存在
         $local_user = weixin::where(['openid'=>$openid])->first();
@@ -68,15 +70,17 @@ if($type=='event'){
                     </xml>';
         }
     }
-}else if($type=='text'){
-    $txt=$data['Content'];//文本信息
+
+
+    if($type=='text'){
+    $txt=$data->Content;//文本信息
    // var_dump($txt);exit;
-    $addtime=$data['CreateTime'];//时间
+    $addtime=$data->CreateTime;//时间
         file_put_contents("logs/txt.log", $str, FILE_APPEND);
-        $openid = $data['FromUserName'];
-        $u=$this->getUserInfo($openid);
+        $openid = $data->FromUserName;
+        //$u=$this->getUserInfo($openid);
         $info=[
-            'openid'=>$u['openid'],
+            'openid'=>$openid,
             'text'=>$txt,
             'createtime'=>$addtime,
         ];
@@ -84,44 +88,38 @@ if($type=='event'){
       //  var_dump($txtinfo);exit;
 
 }else if($type=='image'){
-    $MediaId=$data['MsgId'];//
-            $access = $this->getAccessToken();
-            $url = "https://api.weixin.qq.com/cgi-bin/media/get?access_token=$access&media_id=$MediaId";
-            $time = time();
-            $res_str = file_get_contents($url);
-            file_put_contents("/logs/image/$time.jpg", $res_str, FILE_APPEND);
+            $MediaId=$data->MediaId;//
+        $access = $this->getAccessToken();
+        $url = "https://api.weixin.qq.com/cgi-bin/media/get?access_token=$access&media_id=$MediaId";
+        $time = time();
+        $res_str = file_get_contents($url);
+        file_put_contents("/tmp/image/$time.jpg", $res_str, FILE_APPEND);
         }else if($type=='voice'){
     $MediaId=$data['MsgId'];//
-            $access =  $this->getAccessToken();
-            $vourl = "https://api.weixin.qq.com/cgi-bin/media/get?access_token=$access&media_id=$MediaId";
-            $votime = time();
-            $res_str = file_get_contents($vourl);
-            file_put_contents("/logs/voice/$votime.mp3", $res_str, FILE_APPEND);
+        $access =  $this->getAccessToken();
+        $vourl = "https://api.weixin.qq.com/cgi-bin/media/get?access_token=$access&media_id=$MediaId";
+        $votime = time();
+        $res_str = file_get_contents($vourl);
+        file_put_contents("/tmp/voice/$votime.mp3", $res_str, FILE_APPEND);
         }
 
     }
-    public function getAccessToken(){
-        //判断是否有缓存
-        $key='wx_access_token';
-        $token=Redis::get($key);
-        if($token) {
-
-        }else{
-            $url = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid='.env('WX_APPID').'&secret='.env('WX_APPSECRET');
-            //var_dump($rul);exit;
-            $response=file_get_contents($url);
-            //var_dump($response);exit;
-            $arr=json_decode($response,true);
-            //  var_dump($arr);exit;
-            //缓存
-
-            Redis::set($key,$arr['access_token']);
-            Redis::expire($key,3600);
-            $token= $arr['access_token'];
-
+    public function getAccessToken()
+    {
+        //Cache::pull('access');exit;
+        $access = Cache('access');
+        if (empty($access)) {
+            $appid = "wxe750a38a8fe84b93";
+            $appkey = "f483a2d1affda7dea1231f5ccb70eb0f";
+            $url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=$appid&secret=$appkey";
+            $info = file_get_contents($url);
+            $arrInfo = json_decode($info, true);
+            $key = "access";
+            $access = $arrInfo['access_token'];
+            $time = $arrInfo['expires_in'];
+            cache([$key => $access], $time);
         }
-        return $token;
-
+        return $access;
     }
     //测试
     public function test()
